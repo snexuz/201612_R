@@ -1,0 +1,47 @@
+body {
+	font-family: "Microsoft JhengHei", "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+
+}
+
+
+h1, h2, h3{
+	font-family: "Microsoft JhengHei", "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-size: 1.4em !important;
+	font-weight: bold;
+  line-height: 2em;
+}
+
+h1{
+	margin-top: 30px;
+}
+
+h2, h3{
+	margin-top: 30px;
+	color: #3A87AD;
+}
+
+ul, li {
+	line-height: 1.5em !important;
+}
+
+.section{
+  font-size: 20px;
+}
+
+slides > slide > hgroup + article {
+  margin-top: 10px !important;
+}
+
+blockquote {
+    display: block;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    margin-left: 40px;
+    margin-right: 40px;
+    background-color: #e8e8e8;
+    padding: 10px;
+}
+
+img{
+ 	width: 100% !important;
+}

@@ -1,0 +1,131 @@
+---
+title: 'Ch0: R-Basic, BEFORE WE START'
+author: "劉佳欣 Rafe C. H. Liu / Johnson Hsieh"
+output:
+  html_document:
+    css: styles.css
+    fig_height: 7.5
+    fig_width: 10
+    theme: spacelab
+    toc: true
+    toc_float: 
+      collapsed: false
+      smooth_scroll: true
+---
+```{r setup, include=FALSE, cache=FALSE}
+library(knitr)      # dynamic report generation, RMarkdown
+library(ggplot2)    # data Viz
+library(reshape2)   # long and wide format
+opts_chunk$set(echo = TRUE, comment="", message=FALSE, warning=FALSE)
+```
+
+[Contact](mailto:snexuz@gmail.com)｜[Linkedin](http://tw.linkedin.com/in/rafechliu)
+
+# Introduction
+### why use R?
+  - R 來自世界上最專業的統計學家
+  - [R 可以輸出高品質的視覺化](http://www.r-bloggers.com/mapping-the-worlds-biggest-airlines/)
+  - [R 有驚人彈性和潛力](http://r4stats.com/2013/03/19/r-2012-growth-exceeds-sas-all-time-total/)
+  - R 很容易和其他工具整合(C/C++, Java, Python, ODBC, SQL, Hadoop, SAS, IBM SPSS, Stata, Minitab)
+  - R 很容易擴充和客製化
+  - 不用錢！
+
+### Rstudio
+- 環境設定：
+    - 建立可以使用 R 的環境
+        - install R: [The R Project for Statistical Computing](http://www.r-project.org/)
+        - Powerful IDE for R: [R studio ](http://www.rstudio.com/)
+    - 了解 R 的使用界面
+
+<br><hr><br>
+
+# 如何『自學』
+- "視窗編排"
+- 筆記法
+    - COPY & PASTE
+        - ctrl+c, ctrl+v
+        - cmd+c, cmd+v
+    - 善用註解做筆記：``#`` 
+        - ctrl-shift-c
+
+### 程式『語言』
+- 工作目錄設定
+    - getwd(): get working directory
+    - setwd() 
+    
+    
+### Shortcuts! 專業的表現
+- Run current line/selection
+    - Ctrl+Enter, Ctrl+r
+    - Command+Enter
+    - [Keyboard Shortcuts](https://support.rstudio.com/hc/en-us/articles/200711853-Keyboard-Shortcuts)
+
+<br>
+
+- IDE 的重要性！什麼都可以忘，就是不能忘記[TAB]鍵
+
+<img src='img/tabs.jpg' align='center' style='margin-top: -38px;'></img>
+
+<br>
+
+
+### Tips
+* help()　是很棒的學習資源
+* ? 　　　一個問號讓我們更謙卑
+* ??　　　兩個問號讓我們探索世界
+* apropos()　指令部分關鍵字搜尋
+      
+
+### 套件
+
+- [The Comprehensive R Archive Network - CRAN](https://cran.r-project.org/)
+    - [Packages](https://cloud.r-project.org/web/packages/)
+    - [Manuals](https://cloud.r-project.org/)
+- 套件安裝 / `install.packages()`
+    - rmarkdown
+    - dplyr
+    - ggplot2....
+- 載入套件 / `library("package.name")`
+
+        
+<br><hr><br>
+
+
+# 文件好朋友：rmarkdown 
+- [Markdown Language](https://zh.wikipedia.org/wiki/Markdown)
+- Why R Markdown
+    - save and execute code
+    - generate high quality reports: doc, PDF, Slides, html
+    - interactive and updatable analysis reports
+- `install.packages("rmarkdown")`
+    - [R markdown from RStudio](http://rmarkdown.rstudio.com/index.html)
+    - [http://dspim.github.io/DataCampRmd/index.html](https://github.com/dspim/DataCampRmd/blob/master/index.md)
+    - [R Markdown Reference Guide](https://www.rstudio.com/wp-content/uploads/2015/03/rmarkdown-reference.pdf)
+
+
+        
+<br><hr><br>
+
+
+
+# 學習資源
+- [Quick R](http://www.statmethods.net/index.html): [Data Types](http://www.statmethods.net/input/datatypes.html) / [Control Flow](http://www.statmethods.net/management/controlstructures.html)
+- [R Reference card](http://cran.r-project.org/doc/contrib/Short-refcard.pdf)
+- [R & RStudio Troubleshooting Guide](https://github.com/dspim/R/wiki/R-&-RStudio-Troubleshooting-Guide)
+- [R 翻轉教室](http://wush978.github.io/DataScienceAndR/)
+- 教材之外
+    - [Google!](http://www.google.com) / [Stackover](http://stackoverflow.com/)
+    - [R pubs](https://rpubs.com/) / [Github](https://github.com/explore)
+- 社群
+    - [DSP 智庫驅動](http://dsp.im/) / [Data Challenge](http://dc.dsp.im/main/content/KAMERA-Emergency-Medicine-Challenge) / [D4SG, Data for Social Good](https://www.facebook.com/groups/1642333189376600/?fref=ts) 
+    - [TW R User group](http://www.meetup.com/Taiwan-R/)
+    - [台灣資料科學愛好者交流區](https://www.facebook.com/groups/datasci.tw/?fref=ts)
+    
+    
+<br><hr><br>
+
+
+<div style="text-align: center;">
+<br> Thanks!<br>
+Rafe C.H. Liu｜[Contact](mailto:snexuz@gmail.com)｜[Linkedin](http://tw.linkedin.com/in/rafechliu)
+</div>
