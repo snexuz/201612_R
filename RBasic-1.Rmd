@@ -1,0 +1,533 @@
+---
+title: 'Ch1: R-Basic'
+author: "劉佳欣 Rafe C. H. Liu / Johnson Hsieh"
+output:
+  html_document:
+    css: styles.css
+    fig_height: 7.5
+    fig_width: 10
+    theme: spacelab
+    toc: true
+    toc_float: 
+      collapsed: false
+      smooth_scroll: true
+---
+```{r setup, include=FALSE, cache=FALSE}
+library(knitr)      # dynamic report generation, RMarkdown
+library(ggplot2)    # data Viz
+library(reshape2)   # long and wide format
+options(width = 100)
+opts_chunk$set(echo = TRUE, comment="", message=FALSE, warning=FALSE)
+```
+
+[Contact](mailto:snexuz@gmail.com)｜[Linkedin](http://tw.linkedin.com/in/rafechliu)
+
+# 1. R 物件與索引技術介紹
+### 1.1. 變數的賦值與基本型態
+R 語言中變數的賦值方式有兩種，1. <- (箭號) 以及 2. = (等號)，根據 [Google's R Style Guide](https://google-styleguide.googlecode.com/svn/trunk/Rguide.xml) 建議使用 <- 進行變數賦值。另外，R 語言中程式的註解以 # (井號) 表示。
+
+R 物件最基本的單位是向量 (vector)，以 c() 表示 (c 取自combine之意)，元素以逗號分隔。其中向量包含三種基本類別(class)，即 1.數值向量 (numeric vector)、2. 字串向量 (character vector) 以及 3. 布林向量 (logical vector)。
+```{r comment=""}
+# numeric vector
+x <- c(4.39, 2.11, 3.17)
+x 
+class(x) # 可利用class(x)查詢物件的類別
+
+# character vector，以雙引號 " " 或單引號 ' ' 註記 
+y <- c("apple", "book", "cat")
+y
+class(y)
+
+# logical vector，以TRUE / FALSE 註記，亦可簡化為 T / F
+z <- c(TRUE, FALSE, TRUE)
+z
+class(z)
+```
+
+### 1.2. 向量的類別轉換
+向量物件一次只能接受一種類別，若同時在一個向量中給定多種類別，R 將會依以下順序進行自動轉換：字串 > 數值 > 布林。也可以利用以下函數自行轉換向量的類別：as.character, as.numeric, as.logical。
+```{r comment=""}
+# 向量只容許一種類別 (字串 > 數值 > 布林)
+c(1, 2, "three") # 數值被轉換成字串
+c(1, 2, TRUE, FALSE) # 布林值 TRUE 被轉換成1，FALSE被轉換成0
+c(1.1, 2.4, TRUE, FALSE)
+c("one", 2.4, TRUE) # 所有元素都被轉換成字串
+
+# 字串轉數字
+a1 <- c("89", "91", "102")
+as.numeric(a1)
+
+# 布林轉數字
+a2 <- c(TRUE, TRUE, FALSE)
+as.numeric(a2)
+
+# 數字轉布林
+a3 <- c(-2, -1, 0, 1, 2)
+as.logical(a3)
+
+# 數字轉字串
+as.character(a3)
+```
+
+### 1.3. 向量物件的簡記
+連續整數向量可以利用 : (冒號) 簡記，譬如數列1, 2, 3 在 R 語言中可利用 1:3 簡記。R 中的向量具有 recycling properties，便於執行四則運算。
+```{r comment=""}
+# basic expression of integer vector
+c(1, 2, 3)
+
+# simple expression
+1:3
+3:1
+
+# shorter arguments are recycled
+1:3 * 2
+1:4 + 1:2
+c(0.5, 1.5, 2.5, 3.5) * c(2, 1)
+
+# warning (why?)
+1:3 * 1:2
+```
+
+### 1.4. 向量元素的命名
+在 R 語言中，可以對向量中的每一個元素命名，或者是利用函數 names 對向量元素命名，這有助於該向量的理解。
+```{r comment=""}
+y <- c("apple", "book", "cat")
+y
+y1 <- c(A="apple", B="book", C="cat")
+# 等價於 
+# y1 <- y
+# names(y1) <- c("A", "B", "C")
+y1
+names(y1)
+```
+
+### 1.5. 向量的取值與排序
+利用[ ] (中括號) 與比較運算子(>, <, >=, <=, ==, !=)、邏輯運算子 (&, |) 以及負號 (-) 進行向量的取值。此外，R也支援利用變數的名稱 (names) 來取值。
+
+```{r comment=""}
+# 1st and 3rd elements of vector
+x <- c(4.39, 2.11, 3.17)
+x[c(1,3)] 
+x[c(2,3,1)]
+order(x) # 依x各元素大小排序 (由小到大)
+x[order(x)]
+
+# remove 1st elements of vector
+y <- c("apple", "book", "cat")
+y[c(-1)]
+
+# using comparison and logical operators
+x > 3
+which(x>3) # which indices are TRUE
+x[which(x>3)]
+x[x > 3] # simplify expression
+
+y[y!="apple"]
+
+y1["A"]
+y1[y1=="apple"]
+names(y1)[y1 == "apple"]
+```
+
+### 1.6. 向量元素取代與新增
+利用[ ]進行元素的取代與新增
+```{r comment=""}
+y <- c("apple", "book", "cat")
+y[3] <- "car" # replace 3rd element
+y
+
+x <- c(4.39, 2.11, 3.17)
+x[c(1,3)] <- 0 # replace 1st and 3rd elements to 1
+x[4] <- 1.19 # add 4th element to 1.19
+# 等價於 c(x, 1.19)
+x
+```
+
+### 1.7. data.frame 物件簡介
+資料表 (data.frame) 是向量 (vector) 的一種推廣，它可以將多個相同長度 (不一定是相同類別) 的向量合併在一起 (combine by column)。可以利用
+```{r comment=""}
+x <- c(4.39, 2.11, 3.17)
+y <- c("apple", "book", "cat")
+z <- c(TRUE, FALSE, TRUE)
+df <- data.frame(v1 = x, v2 = y, v3 = z)
+df
+str(df) # 展示物件各欄位的屬性結構 (structure)
+head(df) # 展示物件前6筆資料
+colnames(df) # 展示物件的欄位名稱
+rownames(df) # 展示物件的列名稱
+```
+
+### 1.8. data.frame 的取值
+利用[,] 提取物件內容，基本表達式為x[i, j]，表示x物件中第i列 (ith row)、第j行 (jth column) 的值，也可用x[i, ]表達第i列的向量；x[,j]表達第j行的向量。中括號中可以使用條件算子進行取值。
+另外，可以用 $ (錢號) 來提取物件的特定欄位 (column)，請試著在 df$ 之後按tab (自動完成鍵)。
+
+```{r comment=""}
+df[1] # select 1st column variable
+df[, 1] # select the value of 1st column
+df[, "v1"]
+df$v1
+df[c("v2", "v3")]
+df[2, ] # select 2nd row
+df[df$v1 > 3 & z==TRUE, "v2"]
+```
+
+### 1.9. data.frame 的合併
+利用rbind (上下合併)、cbind (左右合併) 對data.frame進行合併
+```{r comment=""}
+x <- data.frame(Drama=c("我的自由年代", "回到愛以前"), 
+                TV=c("三立", "台視"))
+
+y <- data.frame(Drama=c("我的自由年代", "回到愛以前"),
+                Date=c("2014-02-07", "2014-01-05"),
+                Vol=c(12, NA),
+                Rating=c(2.67, 2.58))
+
+z <- data.frame(Drama=c("16個夏天", "妹妹"), 
+                TV=c("公視", "台視"),
+                Date=c("2014-11-01", "2014-10-10"),
+                Vol=c(16, 7),
+                Rating=c(2.30, 1.30))
+x
+y
+z
+
+xy <- cbind(x, y[,-1])
+rbind(xy, z)
+# 壓縮程式碼 rbind(cbind(x, y[,-1]),z)
+```
+
+### 1.10. factor 物件簡介
+當一向量變數是類別型變數 (categorical data，譬如：性別、教育水準) 時，在R語言中以factor進行定義。
+```{r comment=""}
+# variable gender with 2 "male" entries and 3 "female" entries 
+gender <- c(rep("male",2), rep("female", 3)) 
+gender
+gender <- factor(gender)
+gender
+levels(gender)
+as.numeric(gender) # 1=female, 2=male internally (alphabetically)
+# change vector of labels for the levels
+factor(gender, levels=c("male", "female"), labels=c("M", "F"))
+```
+
+### 1.11. list 物件簡介
+R 環境中最廣義的物件，可以將上述所有物件都包含至同一個物件下。序列 (list) 的表達形式與向量類似，只是每一個元素可以是各種物件型態(vector, data.frame, list, ... )。基本的取值方法是[[ ]] (雙層中括號)，x[[i]]表示list物件中第i個值。如過list物件的位置有命名，則可以用$ (錢號) 來提取物件。
+```{r comment=""}
+L <- list(x = c(1:5), y = c("a", "b", "c"), z = df)
+L
+# teh dollar operator $ or [[]] can be used to retrieve a single element
+L[[2]]
+L$y 
+L[["z"]]
+L[3]
+L[c(1, 3)]
+L[c("x", "y")]
+
+# 序列轉向量
+unlist(L)
+```
+
+
+### 1.12. string 文字處理
+```{r comment=""}
+
+r1 <- "Hello"
+class(r1)
+
+# 單字字元個數 nchar(x)
+nchar(r1)
+
+# 單字分割 substr(x, start=n1, stop=n2)
+substr(r1, start = 1, stop = 3)
+
+# 單字變更大小寫 toupper/tolower(x)
+r1 <- toupper(r1)
+r1
+
+r1 <- tolower(r1)
+r1
+
+# 單字結合成字串 paste(…, sep="")
+r2 <- "world"
+paste(r1, r2, sep = ".")
+paste(r1, r2, sep = " ")
+
+# 字串拆解 strsplit(x, split)
+r3 <- paste(r1, r2, sep = " ")
+r3
+
+r4 <- strsplit(r3, split = " ")
+r4
+r4[[1]][2]
+
+# 字串取代 gsub(pattern, replacement, x)
+r3
+gsub(pattern = "ll", replacement = "oo", x = r3)
+
+# 規則運算式 grepl(pattern,x)
+r5 <- list("hello", "world")
+grep("l", r5)
+grepl("ll", r5)
+
+```
+
+※ 正規表達式補充教材：
+
+- [正規表示式](https://zh.wikipedia.org/wiki/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F)
+- [Introduction to String Matching and Modification in R Using Regular Expressions](http://biostat.mc.vanderbilt.edu/wiki/pub/Main/SvetlanaEdenRFiles/regExprTalk.pdf)
+
+
+### 1.13. 特殊變數介紹
+- NA, not vailable, 通常指遺漏值 (missing value)，可利用 is.na() 函數來判別
+- numeric(0), length(numeric(0) = 0, 長度為0的數值型物件
+- Inf, infinity, 無窮大
+- NaN, not a number, 可利用 is.na() 函數來判別
+```{r comment=""}
+NA # NA
+c(1, NA, 4) + 1
+x <- c(4.39, 2.11, 3.17)
+x[x>5] # numeric(0)
+100/0 # Inf
+-pi/0 #-Inf
+0/0 # NaN
+Inf-Inf # NaN
+```
+
+# 2. Read Data in R
+### 2.1. 從 R console中輸入資料：
+- 利用 `readline` 輸入一行字串 (`"character"`)
+```{r eval=FALSE}
+readline()
+"I am a R user!"
+```
+- 利用 `scan` 輸入一組數值型態的向量 (`"numeric"`)
+- `scan()` 只能接受數值資料
+- 按一次enter鍵可以輸入下一筆數字，連按兩次enter將結束輸入。
+```{r eval=FALSE}
+scan()
+1
+2
+　
+```
+
+### 2.2. 設定 R 環境的工作目錄
+- 利用 `getwd` 來查詢目前的工作目錄 (Working directory)
+```{r}
+getwd()
+```
+- RStudio IDE的使用者可以發現工作目錄會顯示在Console介面的上方
+- 工作目錄的設定與讀取電腦上檔案的相對位置有關，適當的調整有助於工作流程的順暢
+- 想要更改工作目錄可以用 `setwd(dir)` 這個指令
+- 參數`dir`表示想要指向的工作目錄
+```{r eval=FALSE}
+setwd("c:/Users/Johnson/Dropbox/DSP/a1-basic-data-analysis/")
+getwd()
+```
+
+### 2.3. 將 vector 輸出至檔案
+- 先用`file`建立檔案連結(file connection)，再用`cat`函數將向量輸出至該檔案
+```{r}
+output <- file('output.txt')
+cat(1:100,sep='\t',file=output)
+close(output)
+```
+
+### 2.4. 讀取/輸出 text lines 形式的來源
+- 當資料屬於**非表格形式**或**非結構化**時，可使用`readLines`讀取檔案
+- 利用 `writeLines` 將對應的結果輸出
+```{r}
+output <- file('output.txt')
+writeLines(as.character(1:12),con=output)
+```
+```{r}
+input <- readLines(output)
+print(input)
+```
+
+### 2.5. 讀取/輸出 表格形式的資料
+- 利用`read.table`讀檔，利用`write.table`輸出檔案
+```{r}
+# a typical table format data
+head(iris)
+# write to a file
+write.table(iris, file='iris.csv',sep=',')
+# or, more concisely:
+write.csv(iris, file='iris.csv')
+```
+
+```{r eval = FALSE}
+data <- read.table(file='iris.csv',header = TRUE, sep=',')
+# or, more concisely:
+data <- read.csv(file='iris.csv')
+# if you don't want to type in the path
+data <- read.table(file=file.choose(),sep=',')
+```
+- help('read.table') for more information
+
+
+### 2.6. Troubleshooting
+- 讀檔之前，先觀察檔案
+    - 編碼通常都是 `UTF8` 或 `BIG5`
+        - Linux, Darwin: "UTF-8"
+        - Windows: "BIG-5"
+  
+- library function
+    - 依照不同檔案格式選擇
+    - `readLines`, `read.csv`....
+  
+- 如果你想在 windows 環境下讀取含有中文字以utf8編碼的檔案，有兩種建議做法
+```{r eval=FALSE}
+# Solution A
+dat1 <- read.csv("data/ubike-sample-data-utf8.csv", fileEncoding="utf8")
+
+# Solution B
+f <- file("data/ubike-sample-data-utf8.csv", encoding="utf8" )
+dat1 <- read.csv(f)
+```
+
+# 3. Computing
+### 3.1. Math
+```{r}
+x <- 100
+y <- 400
+
+x + y
+x - y
+x * y
+x / y
+
+sqrt(x)
+x^2
+log(x)
+
+```
+
+### 3.2. Basic Statistics
+```{r}
+head(iris)
+
+# Descriptive statistics
+min(iris$Sepal.Length)
+max(iris$Sepal.Length)
+range(iris$Sepal.Length)
+
+sum(iris$Sepal.Length)
+mean(iris$Sepal.Length)
+median(iris$Sepal.Length)
+
+quantile(iris$Sepal.Length)
+summary(iris$Sepal.Length)
+
+# Data trasformation
+iris$log.Sepal.Length <- log(iris$Sepal.Length)
+head(iris)
+
+# Deviation 離差
+iris$dev <- iris$Sepal.Length - mean(iris$Sepal.Length)
+iris$dev.sq <- iris$dev^2
+head(iris)
+
+# Variance 變異數
+sum(iris$dev.sq)/(nrow(iris)-1)
+var(iris$Sepal.Length)
+
+# Standard deviation 標準差
+sqrt(sum(iris$dev.sq)/(nrow(iris)-1))
+sqrt(var(iris$Sepal.Length))
+sd(iris$Sepal.Length)
+
+# Linear Regression 簡單線性迴歸
+lm(Petal.Width ~ Petal.Length, data=iris)
+summary(lm(Petal.Width ~ Petal.Length, data=iris))
+```
+
+
+<br><hr><br>
+
+# 4. Data analysis 101：綜合演練
+### 4.1. R very very quick review
+```{r}
+# a typical table format data
+head(iris)
+
+# [TRY] head(iris, 20)
+tail(iris)
+
+# Dimensions
+dim(iris)
+nrow(iris)
+length(iris)
+
+names(iris)
+
+# 看資料欄位想故事
+str(iris)
+summary(iris)
+
+```
+
+```{r}
+# slice
+iris[4,] # 第 4 列
+iris[,2] # 第 2 欄
+iris[4,2] 
+iris[4,"Sepal.Width"]
+
+```
+
+<b> Quiz: </b>
+請嘗試比較兩程式碼者有何不同: <br>
+iris[c(2:4),]　<br>
+iris[c(2,4),]
+
+```{r}
+# WRITE YOUR CODE
+
+```
+
+### 4.2. Conditional slice
+```{r}
+which(iris$Species == "versicolor")
+iris[which(iris$Species == "versicolor"),]
+```
+
+<b> Quiz: </b>
+請嘗試找出 "versicolor", Petal.Length > 4 的資料
+```{r}
+# WRITE YOUR CODE
+
+```
+
+<hr>
+
+### 4.3. 寫入資料
+利用`read.table`讀檔，利用`write.table`輸出檔案
+
+```{r}
+# write to a file
+write.table(iris, file = 'iris.csv',sep=',')
+
+# or, more concisely:
+write.csv(iris, file = 'iris.csv')
+```
+
+### 4.4. 讀取資料
+```{r eval = FALSE}
+data <- read.table(file = 'iris.csv', header = TRUE, sep=',')
+
+# or, more concisely:
+data <- read.csv(file = 'iris.csv')
+
+# if you don't want to type in the path
+data <- read.table(file = file.choose(), sep=',')
+```
+
+## 本日目標
+- 請讀入您本次課程所需要的分析資料
+    - read.table() / read.csv()
+    - ?read.table() for more information
+
+<div style="text-align: center;">
+<br> Thanks!<br>
+Rafe C.H. Liu｜[Contact](mailto:snexuz@gmail.com)｜[Linkedin](http://tw.linkedin.com/in/rafechliu)
+</div>
