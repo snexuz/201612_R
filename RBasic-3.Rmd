@@ -68,7 +68,7 @@ Data acquisition methods:
 ### 網路下載資料集
 - [交通部臺灣區國道高速公路局「交通資料庫」](http://cit-etc.net1.tw/download.html)
 - Hints：
-    - URL 有規則 => 依照規則產生不同 URL : `url <- paste()`
+    - URL 有規則 => 依照規則產生不同 URL : `url <- paste()`, `as.Date(x = "2016/12/08") %>% format(format="%Y%m%d")`
     - 批次自動下載: `download.file()`
     - 批次讀取子資料夾內檔案 / 整理到一個 data.frame: `list.files()`, `read.csv`, `library(dplyr)`
     - 存成 csv 或資料庫中: `write.csv()`, `library(DBI)`
@@ -82,10 +82,12 @@ untar("20161113.tar.gz")
 all.files <- list.files(path = "./var", recursive = TRUE)
 
 for (i in 1:10){
+  
+  # CODE here
+  
   print(all.files[i])
 }
 
-# your own code
 ```
 
 
@@ -140,13 +142,30 @@ Open Data Protocol(OData)，它是一個開源的協定，藉由簡單的 URL �
 - DBI: R Database Interface
     - 提供一個簡便的資料庫介面讓 R User 可以處理超過記憶體容量的資料
 
-- SQLite 
+- SQLite (Structured Query Language)
     - 是一個小型的關聯式資料庫系統，免費開源，使用時不需事先架設資料庫系統
     - 資料庫僅為單一個檔案，不論備份或搬移都很簡單，要跨平台也很方便
+    - [SQL As Understood By SQLite](https://sqlite.org/lang_select.html)
+    - [SQLite Tutorial](https://www.tutorialspoint.com/sqlite/index.htm)
 
+```{sql, eval=FALSE}
+SELECT DISTINCT column_list
+FROM table_list
+  JOIN table ON join_condition
+WHERE row_filter
+ORDER BY column
+LIMIT count OFFSET offset
+GROUP BY column
+HAVING group_filter;
+```
+    
+- Issues
+    - [Parameterized SQL queries](https://cran.r-project.org/web/packages/RODBCext/vignettes/Parameterized_SQL_queries.html)
+        - [SQL injections: 隱碼攻擊](https://zh.wikipedia.org/wiki/SQL%E8%B3%87%E6%96%99%E9%9A%B1%E7%A2%BC%E6%94%BB%E6%93%8A)
+        - Performance Tuning SQL Queries
+        
 - `install.packages(c("DBI", "RSQLite"))`
     - `vignette("RSQLite")`
-    - [SQL As Understood By SQLite](https://sqlite.org/lang_select.html)
   
 <br>
   

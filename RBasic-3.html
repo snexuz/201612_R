@@ -355,7 +355,7 @@ div.tocify {
 <li><a href="http://cit-etc.net1.tw/download.html">交通部臺灣區國道高速公路局「交通資料庫」</a></li>
 <li>Hints：
 <ul>
-<li>URL 有規則 =&gt; 依照規則產生不同 URL : <code>url &lt;- paste()</code></li>
+<li>URL 有規則 =&gt; 依照規則產生不同 URL : <code>url &lt;- paste()</code>, <code>as.Date(x = &quot;2016/12/08&quot;) %&gt;% format(format=&quot;%Y%m%d&quot;)</code></li>
 <li>批次自動下載: <code>download.file()</code></li>
 <li>批次讀取子資料夾內檔案 / 整理到一個 data.frame: <code>list.files()</code>, <code>read.csv</code>, <code>library(dplyr)</code></li>
 <li>存成 csv 或資料庫中: <code>write.csv()</code>, <code>library(DBI)</code></li>
@@ -369,6 +369,9 @@ untar(&quot;20161113.tar.gz&quot;)
 all.files &lt;- list.files(path = &quot;./var&quot;, recursive = TRUE)
 
 for (i in 1:10){
+  
+  # CODE here
+  
   print(all.files[i])
 }</code></pre>
 <pre><code>[1] &quot;www/tisv-local/TDCS/M03A/20161113/00/TDCS_M03A_20161113_000000.csv&quot;
@@ -381,7 +384,6 @@ for (i in 1:10){
 [1] &quot;www/tisv-local/TDCS/M03A/20161113/00/TDCS_M03A_20161113_003500.csv&quot;
 [1] &quot;www/tisv-local/TDCS/M03A/20161113/00/TDCS_M03A_20161113_004000.csv&quot;
 [1] &quot;www/tisv-local/TDCS/M03A/20161113/00/TDCS_M03A_20161113_004500.csv&quot;</code></pre>
-<pre class="r"><code># your own code</code></pre>
 </div>
 <div id="-web-api-" class="section level3">
 <h3>使用 Web API 取得即時資料</h3>
@@ -437,15 +439,34 @@ write.csv(file = 'open.csv', y, fileEncoding = 'big5')</code></pre>
 <ul>
 <li>提供一個簡便的資料庫介面讓 R User 可以處理超過記憶體容量的資料</li>
 </ul></li>
-<li>SQLite
+<li>SQLite (Structured Query Language)
 <ul>
 <li>是一個小型的關聯式資料庫系統，免費開源，使用時不需事先架設資料庫系統</li>
 <li>資料庫僅為單一個檔案，不論備份或搬移都很簡單，要跨平台也很方便</li>
+<li><a href="https://sqlite.org/lang_select.html">SQL As Understood By SQLite</a></li>
+<li><a href="https://www.tutorialspoint.com/sqlite/index.htm">SQLite Tutorial</a></li>
+</ul></li>
+</ul>
+<pre class="sql"><code>SELECT DISTINCT column_list
+FROM table_list
+  JOIN table ON join_condition
+WHERE row_filter
+ORDER BY column
+LIMIT count OFFSET offset
+GROUP BY column
+HAVING group_filter;</code></pre>
+<ul>
+<li>Issues
+<ul>
+<li><a href="https://cran.r-project.org/web/packages/RODBCext/vignettes/Parameterized_SQL_queries.html">Parameterized SQL queries</a>
+<ul>
+<li><a href="https://zh.wikipedia.org/wiki/SQL%E8%B3%87%E6%96%99%E9%9A%B1%E7%A2%BC%E6%94%BB%E6%93%8A">SQL injections: 隱碼攻擊</a></li>
+<li>Performance Tuning SQL Queries</li>
+</ul></li>
 </ul></li>
 <li><code>install.packages(c(&quot;DBI&quot;, &quot;RSQLite&quot;))</code>
 <ul>
 <li><code>vignette(&quot;RSQLite&quot;)</code></li>
-<li><a href="https://sqlite.org/lang_select.html">SQL As Understood By SQLite</a></li>
 </ul></li>
 </ul>
 <p><br></p>
