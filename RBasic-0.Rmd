@@ -30,7 +30,33 @@ opts_chunk$set(echo = TRUE, comment="", message=FALSE, warning=FALSE)
   - R 很容易擴充和客製化
   - 不用錢！
 
-### Rstudio
+### what R can do?
+  - [Example](https://snexuz.github.io/201612_R/POS.html)
+  - [粉紅高壓電](https://qazwsx36541472.shinyapps.io/Power_HackathonAsia-master/)
+  - [Some things R can do you might not be aware of](http://simplystatistics.org/2013/12/30/some-things-r-can-do-you-might-not-be-aware-of/)
+
+<br><hr><br>
+
+# Data Jobs
+## Data Scientist => DOMAIN-oriented
+1. 資料**分析專案**發起、管理及執行
+2. 資料分析演算法(Multivariate analysis, AI, MLDM)開發
+3. 資料分析產品設計、開發
+4. 視覺化圖表設計
+5. 協助自動化資料分析系統開發
+6. 協助專案技術架構設計
+
+## Data Engineer => TECH-oriented
+1. 開發、整合、優化分析框架(Hadoop, Spark, GPU)，加速分析運算
+2. Data cleaning、Data preprocessing、Feature engineering、Modeling 等**自動化分析**系統開發
+3. 資料取得、整合、儲存、維運(Data lake)
+4. 資料分析演算法(AI, MLDM)開發
+5. 資料分析產品前端介面、資料視覺化呈現開發
+6. 產品系統資安及維運
+
+<br><hr><br>
+
+# Rstudio
 - 環境設定：
     - 建立可以使用 R 的環境
         - install R: [The R Project for Statistical Computing](http://www.r-project.org/)
