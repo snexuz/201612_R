@@ -6,6 +6,10 @@
 - [Ch3: 使用 R 讀取開放資料](https://snexuz.github.io/201612_R/RBasic-3.html)
 - [Ch4: R-EDA](https://snexuz.github.io/201612_R/RBasic-4.html)
 
+# Multivariate Analysis
+- [01 Basic Statistics Review](https://snexuz.github.io/201612_R/Multivariate01.html)
+- [02 PCA & Clustering](https://snexuz.github.io/201612_R/Multivariate02.html)
+
 ## About Rafe.
 
 劉佳欣 <br>
