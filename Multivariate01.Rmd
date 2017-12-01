@@ -1,0 +1,344 @@
+---
+title: 'Multivariate Analysis 01'
+author: "劉佳欣 Rafe C. H. Liu"
+output:
+  html_document:
+    css: styles.css
+    fig_height: 7.5
+    fig_width: 10
+    theme: spacelab
+    toc: true
+    toc_float: 
+      collapsed: false
+      smooth_scroll: true
+---
+```{r setup, include=FALSE, cache=FALSE}
+library(knitr)      # dynamic report generation, RMarkdown
+library(ggplot2)    # data Viz
+library(reshape2)   # long and wide format
+opts_chunk$set(echo = TRUE, comment="", message=FALSE, warning=FALSE)
+```
+
+[Contact](mailto:snexuz@gmail.com)｜[Linkedin](http://tw.linkedin.com/in/rafechliu)
+
+# Data
+
+```{r}
+library(dplyr)
+
+# new dataset
+ubike <- read.csv(file = "./data/ubike-weather-big5.csv", 
+                  fileEncoding = 'BIG-5',
+                  stringsAsFactors = F)
+
+ubike <- ubike %>% select(
+  date, hour, sno, sarea, sna, lat, lng, tot, 
+  sbi = avg.sbi, bemp = avg.bemp,
+  temp, humidity, pressure
+) %>% mutate(
+  sbi = ceiling(sbi), bemp = ceiling(bemp),
+  temp = temp %>% round(digits = 2), 
+  humidity = humidity %>% round(digits = 2), 
+  pressure = pressure %>% round(digits = 2)
+)
+
+# A galance of dataset
+head(ubike)
+
+tail(ubike)
+
+# ETL: Extract-Transform-Load
+str(ubike)
+
+ubike <- ubike %>% 
+  mutate(date = as.Date(date),
+         sarea = as.factor(sarea))
+
+```
+
+
+# Descriptive Statistics
+```{r}
+summary(ubike)
+
+ubike %>%
+  group_by(sarea, sna) %>%
+  summarise(mean(bemp), median(bemp), max(bemp), min(bemp), sd(bemp))
+```
+
+### Cross-Analysis
+
+**Summary Statistics by Groups**
+
+```{r}
+library(dplyr)
+
+ubike %>%
+  filter(date == '2014-12-08', hour == '20') %>%
+  group_by(sarea) %>%
+  summarise(n())
+
+## Data Transformation: Long-data format to Wide-data
+library(reshape2)
+
+ubike %>%
+  filter(sna == '世貿二館' | sna == '信義廣場(台北101)') %>%
+  # filter(sna %in% c('世貿二館', '信義廣場(台北101)')) %>%
+  select(date, hour, sna, sbi) %>%
+  dcast(formula = date + hour ~ sna, value.var = 'sbi') %>%
+  head()
+```
+
+### Correlation
+
+- http://www.statmethods.net/stats/correlations.html
+
+```{r}
+dat <- ubike %>%
+  filter(sna == '世貿二館' | sna == '信義廣場(台北101)') %>%
+  # filter(sna %in% c('世貿二館', '信義廣場(台北101)')) %>%
+  select(date, hour, sna, sbi) %>%
+  dcast(formula = date + hour ~ sna, value.var = 'sbi')
+
+cov(dat[,3:4])
+cor(dat[,3:4], method = 'pearson')
+```
+
+# EDA
+
+**Exploratory Data Analysis**
+
+```{r}
+ubike %>%
+  filter(sna == '世貿二館' | sna == '信義廣場(台北101)') %>%
+  # filter(sna %in% c('世貿二館', '信義廣場(台北101)')) %>%
+  select(date, hour, sarea, sna, sbi) %>%
+  head(10)
+
+## plots
+library(ggplot2)
+
+ubike %>%
+  filter(sna == '世貿二館' | sna == '信義廣場(台北101)') %>%
+  select(date, hour, sarea, sna, sbi) %>% 
+  ggplot(aes(x = hour, y = sbi, group = sna, color = sna)) +
+  geom_line() + facet_grid(date~.) + 
+  theme(text = element_text(family = 'STHeiti')) # for MAC user
+```
+
+# Hypothesis Testing
+### t-tests
+
+- http://www.statmethods.net/stats/ttest.html
+
+```{r}
+# Dataset
+dat <- ubike %>%
+  filter(sna == '世貿二館' | sna == '信義廣場(台北101)') %>%
+  # filter(sna %in% c('世貿二館', '信義廣場(台北101)')) %>%
+  select(date, hour, sna, sbi) %>%
+  dcast(formula = date + hour ~ sna, value.var = 'sbi')
+```
+
+檢定兩區域平均租借數是否相等 (Independent 2-group sample t-test)
+
+- H0: u1 = u2 vs H1: u1 != u2 
+- p is small, reject H0, u1 != u2
+
+```{r}
+t.test(dat$世貿二館, dat$`信義廣場(台北101)`) 
+
+## results are stored in the list
+rt <- t.test(dat$世貿二館, dat$`信義廣場(台北101)`) 
+rt$p.value
+```
+
+
+### ANOVA
+
+- http://www.statmethods.net/stats/anova.html
+- http://programmermagazine.github.io/201311/htm/article3.html
+
+```{r}
+# Dataset
+dat <- ubike %>%
+  filter(sna %in% c('世貿二館', '世貿三館', '信義廣場(台北101)', '市民廣場')) %>%
+  select(date, hour, sna, sbi) 
+
+head(dat)
+summary(dat)
+```
+
+<br>
+**Q: 探討四車站(sna)的平均租借數(sbi)租借數趨勢**
+<br>
+
+```{r}
+# EDA
+dat %>% 
+  ggplot(aes(x = hour, y = sbi, group = sna, colour = sna)) +
+  geom_point(alpha = 0.5) + 
+  geom_smooth(se = FALSE) + theme(text = element_text(family = 'STHeiti')) 
+
+dat %>% group_by(hour, sna) %>%
+  summarise(mean(sbi)) %>%
+  ggplot(aes(x = hour, y = `mean(sbi)`, group = sna, colour = sna)) +
+  geom_line() + theme(text = element_text(family = 'STHeiti')) 
+
+## 檢定四車站(sna)的平均租借數(sbi)是否相等
+dat %>%
+  ggplot(aes(x = sna, y = sbi)) +
+  geom_boxplot() + theme(text = element_text(family = 'STHeiti')) 
+
+## Ho: u1 = u2 = u3 = u4, H1: 全不相等
+## results
+fit <- aov(sbi ~ sna, data = dat) 
+fit
+
+## summary table: 
+# WARNING: R provides Type I sequential SS, 
+# not the default Type III marginal SS reported by SAS and SPSS. 
+# Rej Ho, 
+summary(fit)
+
+par(mfrow=c(2,2))
+plot(fit)
+
+# post-hoc test: Multiple Comparisons
+TukeyHSD(fit)
+```
+
+### MANOVA
+
+- https://rpubs.com/aaronsc32/manova-test-statistics
+
+**Q: 同時對四車站(sna)的平均租借數(sbi)及空位數(bemp)進行檢定**
+
+```{r}
+dat <- ubike %>%
+  filter(sna %in% c('世貿二館', '世貿三館', '信義廣場(台北101)', '市民廣場')) %>%
+  select(date, hour, sna, sbi, bemp) 
+
+head(dat)
+summary(dat)
+
+# manova
+fit <- manova(cbind(sbi,bemp) ~ sna, data = dat) 
+
+summary(fit) 
+
+# 等同做兩次 anova
+summary.aov(fit) # univariate ANOVA tables
+summary(fit, test = "Wilks") # ANOVA table of Wilks' lambda
+```
+
+# Linear Models
+
+- http://www.statmethods.net/stats/regression.html
+
+**Q: 平均租借數(sbi)影響因素**
+
+```{r}
+dat <- ubike %>% filter(sna == '世貿二館') 
+
+head(dat)
+summary(dat)
+
+## correlation
+cor(dat %>% select(sbi, temp, humidity, pressure))
+
+# https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html
+# install.packages('corrplot')
+library(corrplot)
+cor(dat %>% select(sbi, temp, humidity, pressure)) %>% corrplot()
+
+# Model
+fit <- lm(sbi ~ humidity, data = dat)
+summary(fit)
+
+# Other useful functions 
+coefficients(fit) # model coefficients
+confint(fit, level=0.95) # CIs for model parameters 
+fitted(fit) # predicted values
+residuals(fit) # residuals
+anova(fit) # anova table 
+vcov(fit) # covariance matrix for model parameters 
+influence(fit) # regression diagnostics
+
+## compare with ano function
+aov(sbi ~ humidity, data = dat) %>% summary()
+
+## diagnostic plots 
+par(mfrow=c(2,2))
+plot(fit)
+
+## discussions
+lm(temp ~ pressure, data = dat) %>% summary()
+lm(temp ~ pressure + humidity, data = dat) %>% summary()
+
+lm(sbi ~ temp + pressure + humidity, data = dat) %>% summary()
+```
+
+# Generalized Linear Models 
+
+廣義線性模型是傳統線性模型的延伸，可使用非常態分布的資料(例如視為離散的計數或測量比例) 建立模型。 
+
+- `?glm`
+- http://www.theanalysisfactor.com/r-tutorial-glm1/
+- http://stats.idre.ucla.edu/r/
+- http://www.r-tutor.com/elementary-statistics/logistic-regression/estimated-logistic-regression-equation
+
+
+```{r}
+# 製作有車沒車機率資料集
+ubike %>% select(sarea, sna, tot, bemp) %>%
+  mutate(hv_cars = round(bemp/tot, digits = 4)) %>%
+  ggplot(aes(x = hv_cars)) + geom_histogram(binwidth = 0.05) 
+
+# 有車，空車率 >60%，有車
+dat <- ubike %>% 
+       mutate(hv_cars = round(bemp/tot, digits = 4),
+              hv_cars_yn = ifelse(hv_cars > 0.6, 1, 0))
+
+dat <- dat %>% filter(sarea == '信義區')
+
+head(dat)
+
+summary(dat)
+
+### 交叉分析
+
+library(reshape2)
+
+dcast(formula = sna ~ hv_cars_yn, dat)
+
+dcast(formula = sna ~ hv_cars_yn, dat, 
+      fun.aggregate = function(x) round(mean(x), digit = 4), 
+      value.var = 'hv_cars')
+```
+
+### logistic regression
+
+- Generalized Linear Models - binomial family
+
+```{r}
+logitreg <- glm(hv_cars_yn ~ temp + humidity + pressure, data = dat, family = "binomial")
+summary(logitreg)
+
+## CIs using profiled log-likelihood
+confint(logitreg)
+
+## CIs using standard errors
+confint.default(logitreg)
+
+## odds ratios 
+exp(coef(logitreg))
+
+## Likelihood
+logLik(logitreg)
+```
+
+<div style="text-align: center;">
+<br> Thanks!<br>
+Rafe C.H. Liu｜[Contact](mailto:snexuz@gmail.com)｜[Linkedin](http://tw.linkedin.com/in/rafechliu)
+</div>

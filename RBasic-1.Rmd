@@ -488,7 +488,7 @@ iris[c(2,4),]
 ### 4.2. Conditional slice
 ```{r}
 which(iris$Species == "versicolor")
-iris[which(iris$Species == "versicolor"),]
+head(iris[which(iris$Species == "versicolor"),])
 ```
 
 <b> Quiz: </b>
@@ -527,7 +527,11 @@ data <- read.table(file = file.choose(), sep=',')
     - read.table() / read.csv()
     - ?read.table() for more information
 
+<br><hr><br>
+
+
 <div style="text-align: center;">
 <br> Thanks!<br>
 Rafe C.H. Liu｜[Contact](mailto:snexuz@gmail.com)｜[Linkedin](http://tw.linkedin.com/in/rafechliu)
+<p style="font-size: 10pt; text-align: center; color: #dddddd; padding-top:5px;"> UPDATE: 2017-12-01 </p>
 </div>

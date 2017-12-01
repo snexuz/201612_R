@@ -1,0 +1,208 @@
+---
+title: "R - Homework assignments example"
+author: "Rafe C. H. Liu"
+date: "2016/10/17"
+output:
+  html_document:
+    css: styles.css
+    fig_height: 7.5
+    fig_width: 10
+    theme: spacelab
+    toc: true
+    toc_float: 
+      collapsed: false
+      smooth_scroll: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE, cache=FALSE}
+library(dplyr)
+library(reshape2)
+library(ggplot2)
+library(plotly)
+
+Sys.setlocale("LC_TIME", "C")
+```
+
+
+<hr>
+
+# Data project
+  1. 問題定義 (Problem Statement)
+  2. 專案資料清理 (Data Wrangling)
+  3. 探索性資料分析 (Exploratory Data Analysis, EDA) => Dashboard
+  4. 驗證性因素分析 (Confirmatory data analysis) => Modeling
+    - Forecasting: 
+      - Regression Models
+      - Time Series Models, Moving Average...
+      - Machine Learning / Data Mining
+  
+<hr>
+  
+# Expected Outcomes and Project Demo
+
+## Data
+### Data wrangling
+
+```{r comment="", warning=F}
+POS <- read.csv("POS.csv", fileEncoding = "big5", stringsAsFactors = F)
+POS <- POS[-c(8,9)]
+colnames(POS) <- c("date", "shift", "total", "mis", "sub", "orders", "cups")
+
+POS <- POS %>% mutate( 
+                date = as.Date(date),
+                total = gsub(",", replacement = "", total) %>% as.numeric(), # replace "," with ""
+                mis = as.numeric(mis),
+                sub = gsub(",", replacement = "", sub) %>% as.numeric(),
+                orders = as.numeric(orders),
+                cups = as.numeric(cups)) 
+
+# replace NA with 0
+POS[is.na(POS)] <- 0
+
+head(POS) %>% knitr::kable()
+```
+
+### Generate new vars
+```{r comment="", warning=F}
+POS <- POS %>% 
+   mutate(#shift = ifelse(shift == "早", 1, 2) %>% as.factor(),
+          shift = factor(shift, levels = c("早", "晚")),
+          year = format(date, format = "%Y"),
+          month = format(date, format = "%m"),
+          day = format(date, format = "%d"),
+          weekdays = format(date, format = "%a"),
+          cash = total + mis - sub) 
+
+head(POS) %>% knitr::kable()
+```
+
+## Explantory data analysis
+
+### Desciptive analysis
+```{r comment="", warning=F}
+summary(POS)
+
+```
+
+### Cross Analysis
+```{r comment="", warning=F}
+POS %>% group_by(month, weekdays) %>% summarise(cash.total = sum(cash)) %>% head(10) %>% knitr::kable()
+
+POS %>% dcast(month + day + weekdays ~ shift, fun.aggregate = sum, value.var = "cash", margins = "shift") %>%
+  head(10) %>% knitr::kable()
+
+```
+
+
+### Some graphics
+```{r comment="", warning=F}
+
+POS %>%
+  group_by(shift) %>%
+    summarise(shiftsales = sum(total),
+              percentage = shiftsales / sum(547987+401899)) %>%
+  ggplot(data =., aes(x = shift, y = percentage, fill = percentage)) + 
+  geom_bar(stat = "identity", width = 1) 
+
+POS %>%
+  group_by(shift) %>%
+    summarise(shiftsales = sum(total),
+              percentage = shiftsales / sum(547987+401899)) %>%
+  ggplot(data =., aes(x = "", y = percentage, fill = percentage)) + 
+  geom_bar(stat = "identity", width = 1) + 
+  coord_polar(theta = "y")
+
+POS %>%
+group_by(weekdays) %>%
+    summarise( weekdaysales = sum(total)) %>%
+    ggplot(data = ., aes(x = weekdays, y = weekdaysales )) +
+    geom_bar(stat="identity" )
+
+
+POS %>% 
+  group_by(date) %>% summarise(cash.total = sum(cash)) %>%
+  ggplot(aes(x = date, y = cash.total)) +
+  geom_line()
+
+
+POS %>% 
+  group_by(month, day) %>% summarise(cash.total = sum(cash)) %>%
+  ggplot(aes(x = day, y = cash.total, group = month, color = month)) +
+  geom_line()
+
+
+# plotly demo
+p <- POS %>% 
+  group_by(month, day) %>% summarise(cash.total = sum(cash)) %>%
+  ggplot(aes(x = day, y = cash.total, group = month, color = month, fill = month)) +
+  geom_bar(stat = "identity") + 
+  facet_wrap(~ month) 
+
+ggplotly(p)
+
+
+# plotly dropdown
+
+POS %>% dcast(day ~ month, fun.aggregate = sum, value.var = "cash") %>%
+  plot_ly(x = ~day, type = 'bar') %>%
+  add_trace(y = ~`06`, name = "Jun.") %>%
+  add_trace(y = ~`07`, name = "Jul.", visible = F) %>%
+  add_trace(y = ~`08`, name = "Aug.", visible = F) %>%
+  add_trace(y = ~`09`, name = "Sep.", visible = F) %>%
+  layout(
+  title = "Drop down menus - Styling",
+  updatemenus = list(
+    list(
+      x =0.9, y = 0.75, # dropdown mean 的位置
+      buttons = list(
+        list(method = "restyle",
+             args = list("visible", list(TRUE, FALSE, FALSE, FALSE)),
+             label = "June."),
+ 
+        list(method = "restyle",
+             args = list("visible", list(FALSE, TRUE, FALSE, FALSE)),
+             label = "July."),
+    
+        list(method = "restyle",
+             args = list("visible", list(FALSE, FALSE, TRUE, FALSE)),
+             label = "August."),
+
+        list(method = "restyle",
+             args = list("visible", list(FALSE, FALSE, FALSE, TRUE)),
+             label = "September.")
+        ))
+  ))
+
+```
+
+## Modeling
+### Moving Average Forecasting
+```{r comment="", warning=F}
+library(forecast)
+
+dat <- POS %>% group_by(date) %>% summarise(cash.total = sum(total)) 
+nrow(dat)
+# time series obj.
+tdat <- ts(dat$cash.total[11:122], frequency = 7) # from mon to sun
+tdat %>% print(calendar = TRUE) 
+
+
+moving_average <- ma(tdat[1:70], order=3)[2:69] %>% forecast(h = 7)
+moving_average_accuracy <- accuracy(moving_average, tdat[71:77])
+moving_average; moving_average_accuracy
+
+plot(moving_average, ylim = c(6000, 15000), lwd = 2, col = "red")
+lines(tdat[1:78], lwd = 1)
+
+```
+
+# CONTACT
+
+<div style="text-align: center;">
+<br> Thanks!<br>
+Rafe C.H. Liu｜[Contact](mailto:snexuz@gmail.com)｜[Linkedin](http://tw.linkedin.com/in/rafechliu)
+<p style="font-size: 10pt; text-align: center; color: #dddddd; padding-top:5px;"> UPDATE: 2017-12-01 </p>
+</div>
+

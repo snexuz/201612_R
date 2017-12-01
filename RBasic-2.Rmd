@@ -20,7 +20,6 @@ library(data.table)   # long and wide format
 library(dplyr)
 options(width = 100)
 opts_chunk$set(echo = TRUE, comment="", message=FALSE, warning=FALSE)
-setwd("D:/Dropbox/~OnGoing/DSP/20161223 NCTU_TLM")
 ```
 
 [Contact](mailto:snexuz@gmail.com)｜[Linkedin](http://tw.linkedin.com/in/rafechliu)
@@ -165,7 +164,7 @@ ubike$場站名稱
 <b> Quiz: </b> 
 以下顯示？
 ```{r echo=TRUE,eval=FALSE}
-ubike[ubike$sna%in% c("台北市災害應變中心", "世貿三館"), ]
+ubike[ubike$sna %in% c("台北市災害應變中心", "世貿三館"), ]
 
 ```
 
@@ -538,7 +537,11 @@ ubike %>% filter(sarea == '信義區', hour == 8) %>%
 <br><hr><br>
 
 
+<br><hr><br>
+
+
 <div style="text-align: center;">
 <br> Thanks!<br>
 Rafe C.H. Liu｜[Contact](mailto:snexuz@gmail.com)｜[Linkedin](http://tw.linkedin.com/in/rafechliu)
+<p style="font-size: 10pt; text-align: center; color: #dddddd; padding-top:5px;"> UPDATE: 2017-12-01 </p>
 </div>

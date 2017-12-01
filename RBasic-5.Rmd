@@ -1,0 +1,250 @@
+---
+title: 'Ch5: 使用 R 讀取開放資料'
+author: "劉佳欣 Rafe C. H. Liu "
+output:
+  html_document:
+    css: styles.css
+    fig_height: 7.5
+    fig_width: 10
+    theme: spacelab
+    toc: true
+    toc_float: 
+      collapsed: false
+      smooth_scroll: true
+---
+```{r setup, include=FALSE, cache=FALSE}
+library(knitr)      # dynamic report generation, RMarkdown
+library(ggplot2)    # data Viz
+library(reshape2)   # long and wide format
+library(data.table)   # long and wide format
+library(dplyr)
+options(width = 100)
+opts_chunk$set(echo = TRUE, comment="", message=FALSE, warning=FALSE)
+```
+
+[Contact](mailto:snexuz@gmail.com)｜[Linkedin](http://tw.linkedin.com/in/rafechliu)
+
+
+# 1. 取得資料
+
+Data acquisition methods:
+
+- Combine data from local files and different formats (txt, csv, xls, xlsx)
+- Download files from website
+- Accessing an API
+- Scraping a web page (not included in this session)
+
+
+### 開放資料平台結構化資料統計
+- [data.taipei](http://data.taipei/)
+- [政府資料開放平台](http://data.gov.tw/)
+    - CSV(35.03%)、XML(33.36%)、JSON(7.66%)，佔全部開放資料 76%（2015/12/18 統計）
+
+<br>
+<img src='img/gov01.jpg' align='center' style='width:80% !important;'></img>
+<br><br>
+
+|STR |CLASS   |TYPE.MAIN  | COUNT|PERC    |
+|:---:|:-------|:----------|-----:|-------:|
+|YES |Sheets  |CSV        |  7224|35.03 % |
+|    |        |XML        |  6879|33.36 % |
+|    |        |JSON       |  1579|7.66 %  |
+|    |        |RSS        |   113|0.55 %  |
+|    |MAPs    |KML        |    51|0.25 %  |
+|    |        |WMS        |    31|0.15 %  |
+|    |        |SHP        |    82|0.4 %   |
+|    |        |KMZ        |     9|0.04 %  |
+|    |        |WMTS       |     7|0.03 %  |
+|    |WebPage |WebPage    |     2|0.01 %  |
+|    |API     |ASMX       |     1|0 %     |
+|    |        |DEMDSM     |     1|0 %     |
+
+- <a href="http://www.idealyzt.com/100-opendata-types/" target="_blank">質與量 – 100 種開放資料格式</a>
+- <a href="http://www.idealyzt.com/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8-r-%E5%8F%96%E5%BE%97%E9%96%8B%E6%94%BE%E8%B3%87%E6%96%99/" target="_blank">使用 R 讀取開放資料 (CSV, XML, JSON)</a>
+
+
+
+### 網路下載資料集
+- [交通部臺灣區國道高速公路局「交通資料庫」](http://cit-etc.net1.tw/download.html)
+- Hints：
+    - URL 有規則 => 依照規則產生不同 URL : `url <- paste()`, `as.Date(x = "2016/12/08") %>% format(format="%Y%m%d")`
+    - 批次自動下載: `download.file()`
+    - 批次讀取子資料夾內檔案 / 整理到一個 data.frame: `list.files()`, `read.csv`, `library(dplyr)`
+    - 存成 csv 或資料庫中: `write.csv()`, `library(DBI)`
+
+```{r eval=FALSE}
+url <- 'http://tisvcloud.freeway.gov.tw/history/TDCS/M03A/M03A_20161113.tar.gz'
+
+download.file(url, destfile = "20161113.tar.gz")
+untar("20161113.tar.gz")
+
+all.files <- list.files(path = "./var", recursive = TRUE)
+
+for (i in 1:10){
+  
+  # CODE here
+  
+  print(all.files[i])
+}
+
+```
+
+
+### 使用 Web API 取得即時資料
+- [Chrome extension: JSONView](https://chrome.google.com/webstore/detail/json-viewer/aimiinbnnkboelefkjlenlgimcabobli)
+
+<br>
+
+<img src='img/gov02_JSON.jpg' align='center' style='width:80% !important;'></img>
+
+<br>
+
+<img src='img/gov03_XML.jpg' align='center' style='width:80% !important;'></img>
+
+<br>
+
+- Ex. [空氣品質即時污染指標](http://data.gov.tw/node/6074)
+
+```{r echo=TRUE, eval=FALSE}
+# (1) .csv
+url <- "http://data.gov.tw/iisi/logaccess/165?dataUrl=http://opendata.epa.gov.tw/ws/Data/AQX/?format=csv&ndctype=CSV&ndcnid=6074"
+y <- read.csv(url, sep = ",", stringsAsFactors = F, header = T)
+
+# (2) json files
+library(jsonlite)
+url <- 'http://data.gov.tw/iisi/logaccess/166?dataUrl=http://opendata.epa.gov.tw/ws/Data/AQX/?format=json&ndctype=JSON&ndcnid=6074'
+y <- fromJSON(url, flatten = TRUE)
+y <- as.data.frame(y$Records)
+
+# (3) XML 
+library(XML)
+url <- 'http://data.gov.tw/iisi/logaccess/167?dataUrl=http://opendata.epa.gov.tw/ws/Data/AQX/?format=xml&ndctype=XML&ndcnid=6074'
+x <- xmlParse(url) # 以 xmlParse 解析 XML 檔案
+xmlfiles <- xmlRoot(x) # 將 root 設定到 content 層級（一個偷吃步的做法）
+y <- xmlToDataFrame(xmlfiles) # 轉換成 dataframe
+
+# 將整理完成的檔案存成 CSV
+write.csv(file = 'open.csv', y, fileEncoding = 'big5')
+```
+
+### OData
+Open Data Protocol(OData)，它是一個開源的協定，藉由簡單的 URL 參數傳遞，來識別並查詢資料庫資料，此協定支援 XML 及 JSON 格式。
+
+- [公共運輸整合資訊流通服務平台 Public Transport data eXchange](https://ptx.transportdata.tw/PTX)
+- [Google MAP API](https://developers.google.com/maps/?hl=zh-tw)
+
+<br><hr><br>
+
+# 2. 資料庫處理
+
+### RSQLite
+- DBI: R Database Interface
+    - 提供一個簡便的資料庫介面讓 R User 可以處理超過記憶體容量的資料
+
+- SQLite (Structured Query Language)
+    - 是一個小型的關聯式資料庫系統，免費開源，使用時不需事先架設資料庫系統
+    - 資料庫僅為單一個檔案，不論備份或搬移都很簡單，要跨平台也很方便
+    - [SQL As Understood By SQLite](https://sqlite.org/lang_select.html)
+    - [SQLite Tutorial](https://www.tutorialspoint.com/sqlite/index.htm)
+    - [DB Browser for SQLite Portable](https://portableapps.com/apps/development/sqlite_database_browser_portable)
+
+```{sql, eval=FALSE}
+SELECT DISTINCT column_list
+FROM table_list
+  JOIN table ON join_condition
+WHERE row_filter
+ORDER BY column
+LIMIT count OFFSET offset
+GROUP BY column
+HAVING group_filter;
+```
+
+- `install.packages(c("DBI", "RSQLite"))`
+    - `vignette("RSQLite")`
+    
+<br>
+  
+```{r eval=FALSE, include=FALSE}
+library(DBI)
+library(RSQLite)
+
+# 與資料庫建立連線，使用 RSQLite
+mydb <- dbConnect(drv = SQLite(), "iris.db")
+
+# 將某個 dataframe 寫入 db table
+dbWriteTable(conn = mydb, name = "mtcars", value = mtcars)
+dbWriteTable(conn = mydb, name = "iris", value = iris)
+
+# 列出資料庫中有幾個 table
+dbListTables(conn = mydb)
+
+# 讀取資料庫 table 資料
+iris.db <- dbReadTable(conn = mydb, name = "iris")
+
+# 進行資料庫查詢
+## 查詢資料表欄位名稱
+dbListFields(conn = mydb, name = 'iris')
+
+## 單次進行查詢
+dbGetQuery(mydb, 'SELECT * FROM iris WHERE "Sepal.Length" < :x', params = list(x = 4.6))
+
+res1 <- dbGetQuery(conn = mydb, statement = "SELECT * FROM iris where Species == 'setosa' limit 10")
+res1
+
+## 批次查詢，可以對查詢結果先下判斷
+res2 <- dbSendQuery(conn = mydb, statement = "SELECT COUNT(*) FROM iris where Species == 'setosa'")
+fetch(res2)
+
+# 資料庫離線
+dbDisconnect(mydb)
+
+```
+
+### Issues
+
+  - 常見資料庫套件
+      - [RJDBC: Oracle Database, MySql](https://cran.r-project.org/web/packages/RJDBC/index.html)
+      - [RPostgreSQL: Postgres](https://cran.r-project.org/web/packages/RPostgreSQL/index.html)
+  - [Parameterized SQL queries](https://cran.r-project.org/web/packages/RODBCext/vignettes/Parameterized_SQL_queries.html)
+      - [SQL injections: 隱碼攻擊](https://zh.wikipedia.org/wiki/SQL%E8%B3%87%E6%96%99%E9%9A%B1%E7%A2%BC%E6%94%BB%E6%93%8A)
+      - Performance Tuning SQL Queries
+        
+
+# 3. 大「數據」(檔)的處理
+
+### data.table
+- fread 是 data.table 裡的 function
+- 加快讀取速度 (真的很快！)
+- [Introduction to the data.table package in R](http://datatable.r-forge.r-project.org/datatable-intro.pdf)
+
+```{r loadubike, echo = TRUE, cache=TRUE, message=FALSE, eval=TRUE}
+library(data.table)
+ubike <- fread(input = "./data/ubike-weather-big5.csv",
+               data.table = FALSE, 
+               colClasses = c("factor","integer","integer","factor","factor",
+                              "numeric","numeric","integer","numeric","integer",
+                              "integer","numeric","numeric","integer","integer",
+                              "numeric","numeric","numeric","numeric","numeric",
+                              "numeric", "numeric","numeric"),
+               stringsAsFactors = F)
+
+```
+
+
+### SparkR
+Apache Spark 是一個開源叢集運算框架，最初是由加州大學柏克萊分校AMPLab所開發，使用記憶體內運算技術，能在資料尚未寫入硬碟時即在記憶體內分析運算。Spark在記憶體內執行程式的運算速度能做到比 Hadoop MapReduce 的運算速度快上100倍，即便是執行程式於硬碟時，Spark也能快上10倍速度，非常適合用於機器學習演算法。
+
+- [SparkR Practice](http://rstudio-pubs-static.s3.amazonaws.com/133901_f42ea5e9eab74822a4985090748c232c.html)
+- [一天上手 SparkR](http://dataology.blogspot.tw/2016/05/sparkr.html)
+
+
+
+<br><hr><br>
+
+
+<div style="text-align: center;">
+<br> Thanks!<br>
+Rafe C.H. Liu｜[Contact](mailto:snexuz@gmail.com)｜[Linkedin](http://tw.linkedin.com/in/rafechliu)
+<p style="font-size: 10pt; text-align: center; color: #dddddd; padding-top:5px;"> UPDATE: 2017-12-01 </p>
+</div>
+

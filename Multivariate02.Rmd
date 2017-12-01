@@ -1,0 +1,165 @@
+---
+title: 'Multivariate Analysis 02'
+author: "劉佳欣 Rafe C. H. Liu"
+output:
+  html_document:
+    css: styles.css
+    fig_height: 7.5
+    fig_width: 10
+    theme: spacelab
+    toc: true
+    toc_float: 
+      collapsed: false
+      smooth_scroll: true
+---
+```{r setup, include=FALSE, cache=FALSE}
+library(knitr)      # dynamic report generation, RMarkdown
+library(ggplot2)    # data Viz
+library(reshape2)   # long and wide format
+library(dplyr)
+
+ubike <- read.csv(file = "./data/ubike-weather-big5.csv", 
+                  fileEncoding = 'BIG-5',
+                  stringsAsFactors = F)
+
+ubike <- ubike %>% select(
+  date, hour, sno, sarea, sna, lat, lng, tot, 
+  sbi = avg.sbi, bemp = avg.bemp,
+  temp, humidity, pressure
+) %>% mutate(
+  sbi = ceiling(sbi), bemp = ceiling(bemp),
+  temp = temp %>% round(digits = 2), 
+  humidity = humidity %>% round(digits = 2), 
+  pressure = pressure %>% round(digits = 2)
+)
+
+opts_chunk$set(echo = TRUE, comment="", message=FALSE, warning=FALSE)
+```
+
+[Contact](mailto:snexuz@gmail.com)｜[Linkedin](http://tw.linkedin.com/in/rafechliu)
+
+
+# Principal Components Analysis
+
+- https://rpubs.com/skydome20/R-Note7-PCA
+- [Principal Components Analysis: A How-To Manual for R](http://psych.colorado.edu/wiki/lib/exe/fetch.php?media=labs:learnr:emily_-_principal_components_analysis_in_r:pca_how_to.pdf)
+
+```{r}
+head(ubike)
+
+# 製作資料集，並將含有 NA 值的觀察過濾掉
+dat <- ubike %>% filter(sarea == '信義區') %>%
+  select(sbi, temp, humidity, pressure) %>% na.omit()
+
+# PCA
+pr <- prcomp(~ temp + humidity + pressure, 
+             data = dat,
+             scale = TRUE)  # 正規化
+
+pr
+summary(pr)
+
+str(pr)
+
+## 特徵向量(原變數的線性組合)
+# loadings: 依照係數組成判斷
+pr$rotation
+
+# score
+head(pr$x)
+
+## 陡坡圖(Scree plot): 選擇成分
+plot(pr, type="line")
+
+# 主成分分析會將特徵值最大的因素先萃取出來，一般而言特徵值大於1，就是需選擇的因子。
+# 用藍線標示出特徵值=1的地方
+abline(h=1, col="blue")
+
+# 經過主成份分析後，會轉換成新的以主成份代替的資料集
+head(pr$x)
+
+# https://cran.r-project.org/web/packages/ggfortify/vignettes/plot_pca.html
+library(ggfortify)
+autoplot(pr, loadings = TRUE, loadings.label = TRUE)
+
+pr$sdev^2 #因子的標準差平方就是特徵值
+
+```
+
+# Factor Analysis
+
+- 須指定要事先指定使用多少因子，如果使用的因子過多，則會導致失敗的結果。
+- https://web.stanford.edu/class/psych253/tutorials/FactorAnalysis.html
+- http://www.statmethods.net/advstats/factor.html
+
+
+```{r}
+fa <- factanal(dat[,2:4], factors = 1)
+fa
+summary(fa)
+
+```
+
+# Structural Equation Modeling
+
+- `install.packages('sem')`
+- https://socserv.socsci.mcmaster.ca/jfox/Books/Companion/appendix/Appendix-SEMs.pdf
+
+<hr>
+# Clustering
+
+- http://www.statmethods.net/advstats/cluster.html
+
+**Q: 使用分群演算法對台北市腳踏車站進行分群**
+
+## Spatial data 
+```{r}
+dat <- ubike %>% select(sna, sarea, lat, lng) %>%
+  distinct(sna, .keep_all = T)
+
+# 經度(longitude, x)，緯度(latitude, y)
+library(ggplot2)
+dat %>% ggplot(aes(x = lng, y = lat)) + 
+  geom_point(aes(colour = sarea)) + 
+  theme(text = element_text(family = 'STHeiti')) 
+
+## 繪製地圖
+# https://blog.gtwang.org/r/r-ggmap-package-spatial-data-visualization/
+library(ggmap)
+basemap <- get_map("Taipei, Taiwan", zoom = 12, maptype = "toner-lite")
+ggmap(basemap)
+
+p <- ggmap(basemap, darken = c(0.5, "white"))
+
+p1 <- p + geom_point(data = dat, aes(x = lng, y = lat, colour = sarea)) +
+  theme(legend.position="none")
+
+p1
+```
+
+## kmeans
+
+- http://kanchengzxdfgcv.blogspot.tw/2016/05/r-kmeans-cluster.html
+
+```{r}
+myCluster <- kmeans(dat[, 3:4], centers = 5, nstart = 20)
+myCluster
+myCluster$cluster <- as.factor(myCluster$cluster)
+ggplot(data = dat, aes(x = lng, y = lat, color = myCluster$cluster)) + geom_point()
+
+## 繪製分群後地圖
+p2 <- p + geom_point(data = dat, aes(x = lng, y = lat, color = myCluster$cluster)) +
+  theme(legend.position="none")
+p2
+
+## 前後比較
+#install.packages('gridExtra')
+gridExtra::grid.arrange(p1, p2, nrow = 1)
+```
+
+
+<div style="text-align: center;">
+<br> Thanks!<br>
+Rafe C.H. Liu｜[Contact](mailto:snexuz@gmail.com)｜[Linkedin](http://tw.linkedin.com/in/rafechliu)
+</div>
+
